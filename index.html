@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Transpositor de Acordes con Notas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background-color: #fff;
+            padding: 30px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"], select {
+            width: 100%;
+            padding: 12px 20px;
+            margin-top: 5px;
+            margin-bottom: 10px;
+            display: inline-block;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            background-color: #28a745;
+            color: white;
+            padding: 14px 20px;
+            margin-top: 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .output, .single-chord-output {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+        }
+        .output strong, .single-chord-output strong {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .transposed-chords {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .chord-container, .single-chord-container {
+            background-color: #fff;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: calc(50% - 15px);
+            box-sizing: border-box;
+        }
+        .chord-container h3, .single-chord-container h3 {
+            margin: 0 0 10px 0;
+            color: #007bff;
+        }
+        .chord-notes, .single-chord-notes {
+            margin: 0;
+            padding: 0;
+            list-style-type: none;
+        }
+        .chord-notes li, .single-chord-notes li {
+            display: inline-block;
+            background-color: #f1f1f1;
+            padding: 5px 10px;
+            margin: 3px;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+        @media (max-width: 800px) {
+            .chord-container, .single-chord-container {
+                width: 100%;
+            }
+        }
+        /* Estilos para la sección de análisis de acordes individuales */
+        .single-chord-section {
+            margin-top: 50px;
+        }
+        .single-chord-section input[type="text"] {
+            width: 70%;
+            display: inline-block;
+        }
+        .single-chord-section button {
+            width: 28%;
+            display: inline-block;
+            margin-left: 2%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Transpositor de Acordes con Notas</h1>
+        
+        <!-- Sección de Transposición de Acordes -->
+        <label for="originalChords">Acordes Originales (separados por espacios):</label>
+        <input type="text" id="originalChords" placeholder="Ejemplo: C G Am F">
+        
+        <label for="originalKey">Tonalidad Original:</label>
+        <select id="originalKey">
+            <option value="C">C</option>
+            <option value="C#">C# / Db</option>
+            <option value="D">D</option>
+            <option value="D#">D# / Eb</option>
+            <option value="E">E</option>
+            <option value="F">F</option>
+            <option value="F#">F# / Gb</option>
+            <option value="G">G</option>
+            <option value="G#">G# / Ab</option>
+            <option value="A">A</option>
+            <option value="A#">A# / Bb</option>
+            <option value="B">B / Cb</option>
+        </select>
+        
+        <label for="targetKey">Tonalidad Deseada:</label>
+        <select id="targetKey">
+            <option value="C">C</option>
+            <option value="C#">C# / Db</option>
+            <option value="D">D</option>
+            <option value="D#">D# / Eb</option>
+            <option value="E">E</option>
+            <option value="F">F</option>
+            <option value="F#">F# / Gb</option>
+            <option value="G">G</option>
+            <option value="G#">G# / Ab</option>
+            <option value="A">A</option>
+            <option value="A#">A# / Bb</option>
+            <option value="B">B / Cb</option>
+        </select>
+        
+        <button id="transposeBtn">Transponer</button>
+        
+        <div class="output">
+            <strong>Acordes Transpuestos:</strong>
+            <div class="transposed-chords" id="transposedChords">
+                <p>Aquí aparecerán los acordes transpuestos con sus notas.</p>
+            </div>
+        </div>
+        
+        <!-- Sección de Análisis de Acordes Individuales -->
+        <div class="single-chord-section">
+            <h2>Análisis de Cualquier Acorde</h2>
+            <label for="singleChord">Introduce un Acorde:</label>
+            <div>
+                <input type="text" id="singleChord" placeholder="Ejemplo: Em7">
+                <button id="analyzeChordBtn">Obtener Notas</button>
+            </div>
+            <div class="single-chord-output">
+                <strong>Notas del Acorde:</strong>
+                <div class="single-chord-container" id="singleChordNotes">
+                    <p>Aquí aparecerán las notas del acorde introducido.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Orden de las notas cromáticas
+        const noteOrder = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+        // Mapeo de equivalentes enharmónicos
+        const enharmonics = {
+            'Cb': 'B',
+            'Db': 'C#',
+            'Eb': 'D#',
+            'Fb': 'E',
+            'Gb': 'F#',
+            'Ab': 'G#',
+            'Bb': 'A#',
+            'E#': 'F',
+            'B#': 'C'
+        };
+
+        // Mapeo de acordes a intervalos (soporta más tipos de acordes)
+        const chordIntervals = {
+            'maj9': [0, 4, 7, 11, 14],      // Novena mayor
+            'maj7': [0, 4, 7, 11],          // Séptima mayor
+            'maj6': [0, 4, 7, 9],           // Sexta mayor
+            '6': [0, 4, 7, 9],              // Sexta mayor (sin sufijo)
+            'maj': [0, 4, 7],               // Mayor
+            '': [0, 4, 7],                  // Mayor (sin sufijo)
+            'm7b5': [0, 3, 6, 10],          // Séptima menor con quinta disminuida
+            'm9': [0, 3, 7, 10, 14],        // Novena menor
+            'm7': [0, 3, 7, 10],            // Séptima menor
+            'm6': [0, 3, 7, 9],             // Sexta menor
+            'm': [0, 3, 7],                 // Menor
+            'min7': [0, 3, 7, 10],          // Séptima menor (sin abreviatura)
+            'dim7': [0, 3, 6, 9],           // Séptima disminuida
+            'dim': [0, 3, 6],               // Disminuido
+            'aug': [0, 4, 8],               // Aumentado
+            '7#5': [0, 4, 8, 10],           // Séptima dominante con quinta aumentada
+            '7b5': [0, 4, 6, 10],           // Séptima dominante con quinta disminuida
+            '7': [0, 4, 7, 10],             // Séptima dominante
+            'sus2': [0, 2, 7],              // Suspendido 2
+            'sus4': [0, 5, 7],              // Suspendido 4
+            'add9': [0, 4, 7, 14],          // Añade una novena
+            '9': [0, 4, 7, 10, 14],         // Novena dominante
+            // Puedes agregar más tipos de acordes aquí
+        };
+
+        /**
+         * Obtiene el índice de una nota en el arreglo noteOrder,
+         * manejando equivalentes enharmónicos.
+         * @param {string} note - La nota a buscar.
+         * @returns {number} - Índice de la nota o -1 si no se encuentra.
+         */
+        function getNoteIndex(note) {
+            if (enharmonics[note]) {
+                return noteOrder.indexOf(enharmonics[note]);
+            }
+            return noteOrder.indexOf(note);
+        }
+
+        /**
+         * Transpone una única nota dado un número de semitonos.
+         * @param {string} chord - El acorde a transponer.
+         * @param {number} semitones - Número de semitonos para transponer.
+         * @returns {string} - Acorde transpuesto.
+         */
+        function transposeChord(chord, semitones) {
+            // Extraer la raíz del acorde (ejemplo: de Am7, obtener A)
+            const match = chord.match(/^[A-G][b#]?/);
+            if (!match) return chord; // Si no coincide, devolver tal cual
+            let root = match[0];
+            let suffix = chord.slice(root.length);
+
+            let index = getNoteIndex(root);
+            if (index === -1) return chord; // Si no se encuentra la nota, devolver como está
+
+            let transposedIndex = (index + semitones) % 12;
+            if (transposedIndex < 0) transposedIndex += 12;
+
+            let transposedRoot = noteOrder[transposedIndex];
+            return transposedRoot + suffix;
+        }
+
+        /**
+         * Obtiene las notas que componen un acorde transpuesto.
+         * @param {string} chord - El acorde transpuesto.
+         * @returns {Array} - Array de notas que componen el acorde.
+         */
+        function getChordNotes(chord) {
+            // Determinar el tipo de acorde
+            let type = 'maj'; // Por defecto mayor
+            // Buscar el sufijo del acorde para determinar el tipo
+            // Priorizar tipos más largos para evitar conflictos (e.g., 'maj9' antes que 'maj7')
+            const suffixes = Object.keys(chordIntervals).sort((a, b) => b.length - a.length);
+            for (let suf of suffixes) {
+                if (suf !== '' && chord.endsWith(suf)) {
+                    type = suf;
+                    break;
+                }
+            }
+
+            // Obtener la raíz
+            const match = chord.match(/^[A-G][b#]?/);
+            if (!match) return [];
+
+            let root = match[0];
+            let rootIndex = getNoteIndex(root);
+            if (rootIndex === -1) return [];
+
+            // Obtener las notas basadas en los intervalos
+            let intervals = chordIntervals[type] || chordIntervals['maj'];
+            let notes = intervals.map(interval => {
+                let noteIndex = (rootIndex + interval) % 12;
+                // Para intervalos mayores a 12 (como 14 para la novena), ajustamos
+                if (interval >= 12) {
+                    noteIndex = (rootIndex + (interval % 12)) % 12;
+                }
+                return noteOrder[noteIndex];
+            });
+
+            return notes;
+        }
+
+        // Función para manejar la transposición de acordes
+        document.getElementById('transposeBtn').addEventListener('click', () => {
+            const originalChordsInput = document.getElementById('originalChords').value.trim();
+            const originalKey = document.getElementById('originalKey').value;
+            const targetKey = document.getElementById('targetKey').value;
+
+            if (originalChordsInput === '') {
+                alert('Por favor, introduce los acordes originales.');
+                return;
+            }
+
+            // Calcular la diferencia en semitonos entre las dos tonalidades
+            let originalIndex = getNoteIndex(originalKey);
+            let targetIndex = getNoteIndex(targetKey);
+            if (originalIndex === -1 || targetIndex === -1) {
+                alert('Por favor, selecciona tonalidades válidas.');
+                return;
+            }
+            let semitoneDifference = targetIndex - originalIndex;
+
+            // Dividir los acordes ingresados por espacios
+            let originalChords = originalChordsInput.split(/\s+/);
+            let transposedChords = originalChords.map(chord => transposeChord(chord, semitoneDifference));
+
+            // Obtener las notas de cada acorde transpuesto
+            let chordsWithNotes = transposedChords.map(chord => {
+                let notes = getChordNotes(chord);
+                return { chord, notes };
+            });
+
+            // Generar el contenido HTML para mostrar los acordes y sus notas
+            let outputHTML = '';
+            chordsWithNotes.forEach(item => {
+                if (item.notes.length > 0) {
+                    outputHTML += `
+                        <div class="chord-container">
+                            <h3>${item.chord}</h3>
+                            <ul class="chord-notes">
+                                ${item.notes.map(note => `<li>${note}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                } else {
+                    outputHTML += `
+                        <div class="chord-container">
+                            <h3>${item.chord}</h3>
+                            <p>No se pudieron determinar las notas de este acorde.</p>
+                        </div>
+                    `;
+                }
+            });
+
+            // Mostrar los acordes transpuestos con sus notas
+            document.getElementById('transposedChords').innerHTML = outputHTML;
+        });
+
+        // Función para analizar un acorde individual
+        document.getElementById('analyzeChordBtn').addEventListener('click', () => {
+            const singleChordInput = document.getElementById('singleChord').value.trim();
+
+            if (singleChordInput === '') {
+                alert('Por favor, introduce un acorde para analizar.');
+                return;
+            }
+
+            // Transponer el acorde con semitonos = 0 para mantenerlo igual
+            let transposedChord = transposeChord(singleChordInput, 0);
+
+            // Obtener las notas del acorde
+            let notes = getChordNotes(transposedChord);
+
+            // Generar el contenido HTML para mostrar las notas del acorde
+            let outputHTML = '';
+            if (notes.length > 0) {
+                outputHTML += `
+                    <div class="single-chord-container">
+                        <h3>${transposedChord}</h3>
+                        <ul class="single-chord-notes">
+                            ${notes.map(note => `<li>${note}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            } else {
+                outputHTML += `
+                    <div class="single-chord-container">
+                        <h3>${transposedChord}</h3>
+                        <p>No se pudieron determinar las notas de este acorde.</p>
+                    </div>
+                `;
+            }
+
+            // Mostrar las notas del acorde
+            document.getElementById('singleChordNotes').innerHTML = outputHTML;
+        });
+    </script>
+</body>
+</html>
